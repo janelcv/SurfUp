@@ -41,8 +41,8 @@ def welcome():
 @app.route("/api/v1.0/precipitation")
 def prcp():
     """Return a date and precipitation"""
-    # Query date and prcp
-    results = session.query( Measurement.date, Measurement.prcp).\
+    #Query date and prcp
+    results = session.query(Measurement.date, Measurement.prcp).\
     order_by(Measurement.date).\
     filter(Measurement.date.between('2016-08-23', '2017-08-23')).all()
 
@@ -50,11 +50,9 @@ def prcp():
     all_data = list(np.ravel(results))
     
     prcp = []
-    prcp_dict = {}
-    for row in results:
-        if row[0] not in prcp_dict:
-            prcp_dict[row[0]] = {}
-            prcp_dict[row[0]] = row[1]
+    for i in results:
+        prcp_dict = {}
+        prcp_dict[i[0]] = i[1]
         prcp.append(prcp_dict)
 
     return jsonify(prcp)
@@ -63,16 +61,17 @@ def prcp():
 def station():
     """Return a list of stations from the dataset"""
     # Query date and prcp
-    stations = session.query(Measurement.station).\
-    group_by(Measurement.station).all()
+    stations = session.query(Station.name).all()
     
     # Convert list of tuples into normal list
     station_data = list(np.ravel(stations))
-    station_dict = {}
+    
+    station_names = []
     for i in range(len(station_data)):
+        station_dict = {}
         station_dict['Station'] = station_data[i]
-
-    return jsonify(station_dict)
+        station_names.append(station_dict)
+    return jsonify(station_names)
 
 if __name__ == '__main__':
     app.run(debug=True)
@@ -81,22 +80,21 @@ if __name__ == '__main__':
 def temp():
     """Return the dates and temperature observations from a year from the last data point"""
     # Query date and prcp
-    obs = session.query(Measurement.date, Measurement.tobs).\
-    filter(Measurement.date.between('2016-08-23', '2017-08-23')).all()
+    tobs = session.query(Measurement.date, Measurement.tobs).\
+    filter(Measurement.date.between('2016-08-23', '2017-08-23')).\
+    order_by(Measurement.date).all()
 
     # Convert list of tuples into normal list
-    obs_data = list(np.ravel(obs))
+    tobs_data = list(np.ravel(tobs))
 
-    obs_list = []
-    obs_dict = {}
-    for row in obs:
-        if row[0] not in obs_dict:
-            obs_dict[row[0]] = {}
-            obs_dict[row[0]] = row[1]
-        obs_list.append(obs_dict)
+    tobs_list = []
+    for tob in tobs:
+        tobs_dict = {}
+        tobs_dict['Date'] = tob.date
+        tobs_dict['Temp(F)'] = tob.tobs
+        tobs_list.append(tobs_dict)
 
-    return jsonify(obs_list)
+    return jsonify(tobs_list)
 
 if __name__ == '__main__':
     app.run(debug=True)
-
