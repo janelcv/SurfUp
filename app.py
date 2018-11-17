@@ -98,3 +98,47 @@ def temp():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+@app.route("/api/v1.0/<start>")
+def start(start):
+    """Return the MIN, AVG, MAX temperature observations from the selected data point"""
+    start_date = dt.datetime.strptime(start, '%Y-%m-%d')
+
+    results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+    filter(Measurement.date >= start_date).all()
+
+    start_list = []
+    for result in results:
+        start_dict = {}
+        start_dict['MIN'] = result[0]
+        start_dict['AVG'] = result[1]
+        start_dict['MAX'] = result[2]
+        start_list.append(start_dict)
+
+    return jsonify(start_list)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+@app.route("/api/v1.0/<start>/<end>")
+def startend(start,end):
+    """Return the MIN, AVG, MAX temperature observations between selected dates"""
+    start_date = dt.datetime.strptime(start, '%Y-%m-%d')
+    end_date = dt.datetime.strptime(end, '%Y-%m-%d')
+    
+    results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+    filter(Measurement.date >= start_date).filter(Measurement.date <= end_date).all()
+    
+    startend_list = []
+    for result in results:
+        startend_dict = {}
+        startend_dict['MIN'] = result[0]
+        startend_dict['AVG'] = result[1]
+        startend_dict['MAX'] = result[2]
+        startend_list.append(startend_dict)
+    
+    return jsonify(startend_list)
+
+if __name__ == '__main__':
+    app.run(debug=True)
