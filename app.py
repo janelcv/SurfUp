@@ -31,11 +31,13 @@ app = Flask(__name__)
 @app.route("/")
 def welcome():
     """List all available api routes."""
-    return (f"Welcome To Hawaii Vacation Planner!<br>"
-            f"Page Available Routes:<br>"
-            f"Precipitaion: /api/v1.0/precipitation<br>"
-            f"Weather Stations: /api/v1.0/stations<br>"
-            f"Temperature: /api/v1.0/tobs"
+    return (f"Dear Guest, Welcome To Honululu HI Vacation Planner!<br>"
+            f"This page will allow you to get prepared for your vacation. Please follow this routes to find information you need:<br>"
+            f"You can access Precipitation Data by following this route: /api/v1.0/precipitation<br>"
+            f"You can access Weather Stations Data by following this route: /api/v1.0/stations<br>"
+            f"You can access Temperature Data by following this route: /api/v1.0/tobs<br>"
+            f"You can access Temperature Data starting from date you choose by following this route: /api/v1.0/<start><br>"
+            f"You can access Temperature Data for specific period(start/end) on you choice by following this route: /api/v1.0/<start>/<end>"
             )
 
 @app.route("/api/v1.0/precipitation")
@@ -102,18 +104,19 @@ if __name__ == '__main__':
 
 @app.route("/api/v1.0/<start>")
 def start(start):
+    return (f"Please enter start date. (example: 2017-07-17)<br>")
     """Return the MIN, AVG, MAX temperature observations from the selected data point"""
     start_date = dt.datetime.strptime(start, '%Y-%m-%d')
 
-    results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
-    filter(Measurement.date >= start_date).all()
+    results = session.query(Measurement.date, func.min(Measurement.tobs), func.round(func.avg(Measurement.tobs)), func.max(Measurement.tobs)). group_by(Measurement.date).filter(Measurement.date >= start_date).all()
 
     start_list = []
     for result in results:
         start_dict = {}
-        start_dict['MIN'] = result[0]
-        start_dict['AVG'] = result[1]
-        start_dict['MAX'] = result[2]
+        start_dict[result[0]] = {}
+        start_dict[result[0]]['MIN'] = result[1]
+        start_dict[result[0]]['AVG'] = result[2]
+        start_dict[result[0]]['MAX'] = result[3]
         start_list.append(start_dict)
 
     return jsonify(start_list)
@@ -123,21 +126,24 @@ if __name__ == '__main__':
 
 @app.route("/api/v1.0/<start>/<end>")
 def startend(start,end):
+    return (f"Please enter start and end date. (example: 2017-07-17/2017-07-27)<br>")
     """Return the MIN, AVG, MAX temperature observations between selected dates"""
     start_date = dt.datetime.strptime(start, '%Y-%m-%d')
     end_date = dt.datetime.strptime(end, '%Y-%m-%d')
     
-    results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+    results = session.query(Measurement.date,func.min(Measurement.tobs), func.round(func.avg(Measurement.tobs)), func.max(Measurement.tobs)).\
+    group_by(Measurement.date).\
     filter(Measurement.date >= start_date).filter(Measurement.date <= end_date).all()
     
     startend_list = []
     for result in results:
         startend_dict = {}
-        startend_dict['MIN'] = result[0]
-        startend_dict['AVG'] = result[1]
-        startend_dict['MAX'] = result[2]
+        startend_dict[result[0]] = {}
+        startend_dict[result[0]]['MIN'] = result[1]
+        startend_dict[result[0]]['AVG'] = result[2]
+        startend_dict[result[0]]['MAX'] = result[3]
         startend_list.append(startend_dict)
-    
+
     return jsonify(startend_list)
 
 if __name__ == '__main__':
